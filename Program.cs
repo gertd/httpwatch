@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
+﻿using Microsoft.Extensions.CommandLineUtils;
+using System;
 using System.Security.Permissions;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
-using Common.CommandLine;
 
 namespace HttpWatch
 {
@@ -20,26 +15,50 @@ namespace HttpWatch
         {
             try
             {
-                var parsedArgs = new CmdLineArgs();
-                if (Parser.ParseArguments(args, parsedArgs))
+                var app = new CommandLineApplication()
                 {
-                    try
+                    Name = "httpwatch",
+                    FullName = "HTTP Watch",
+                    Description = "Monitor the HTTP endpoint",
+                    ShortVersionGetter = () => "0.0.1"
+                };
+                app.HelpOption("--help");
+                app.Command("monitor", c =>
+                {
+                    c.Description = "Monitor the http.sys event stream";
+                    c.HelpOption("--help");
+                    c.OnExecute(() =>
                     {
-                        // Console.CancelKeyPress += (sender, eventArgs) => Exit.Set();
+                        Console.WriteLine("monitor");
+                        return 1;
+                    });
+                });
+                app.Command("start", c =>
+                {
+                    c.Description = "Start the ETW event stream for http.sys";
+                    c.HelpOption("--help");
+                    c.OnExecute(() =>
+                    {
+                        EtwSessionManager.Start();
+                        return 1;
+                    });
+                });
+                app.Command("stop", c =>
+                {
+                    c.Description = "Stop the ETW event stream for http.sys";
+                    c.HelpOption("--help");
+                    c.OnExecute(() =>
+                    {
+                        EtwSessionManager.Stop();
+                        return 2;
+                    });
 
-                    }
-                    catch (Exception ex)
-                    {
-                        log.Error(ex.Message, ex);
-                    }
-                }
-                else
-                {
-                    Console.Out.Write(Parser.ArgumentsUsage(typeof(CmdLineArgs)));
-                }
+                });
+                app.Execute(args);
             }
             catch (Exception ex)
             {
+                Console.Error.WriteLine(ex.Message);
                 log.Error(ex.Message, ex);
             }
         }
